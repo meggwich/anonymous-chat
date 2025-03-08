@@ -1,5 +1,4 @@
-// Компонент App.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 import MessageList from './components/MessageList';
@@ -30,8 +29,8 @@ function App() {
     }
   }, []);
 
-  // Функция для получения новых сообщений
-  const fetchMessages = async () => {
+  // Мемоизированная функция для получения новых сообщений
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:7070/messages?from=${lastMessageId}`);
       if (!response.ok) {
@@ -46,7 +45,7 @@ function App() {
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, [lastMessageId]);
 
   // Инициализация сообщений и настройка полинга
   useEffect(() => {
@@ -84,7 +83,7 @@ function App() {
     }, 3000); // Проверка новых сообщений каждые 3 секунды
     
     return () => clearInterval(interval);
-  }, [userId, lastMessageId]);
+  }, [userId, lastMessageId, fetchMessages]);
 
   // Автоскроллинг к последнему сообщению
   useEffect(() => {
@@ -93,8 +92,8 @@ function App() {
     }
   }, [messages]);
 
-  // Отправка нового сообщения
-  const sendMessage = async (content: string) => {
+  // Мемоизированная функция для отправки нового сообщения
+  const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
     
     setLoading(true);
@@ -125,7 +124,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, fetchMessages]);
 
   return (
     <div className="chat-container">
